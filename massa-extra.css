@@ -782,7 +782,11 @@
 
 /* ── Light mode overrides ────────────────────────────────────────── */
 .light-mode .prod-titulo             { color: #000; }
-.light-mode .prod-config-nome        { color: #000; }
+/* BUG FIX #4: classe era .prod-config-nome (inexistente). A classe real
+   usada em producao.js é .prod-config-nome-badge. No tema Arctic o badge
+   ficava invisível: texto var(--text-primary, #fff) sobre fundo branco. */
+.light-mode .prod-config-nome-badge  { color: #1C1C1E; background: rgba(0,122,255,0.10); border-color: rgba(0,122,255,0.35); }
+body.theme-arctic .prod-config-nome-badge { color: #1C1C1E; background: rgba(0,122,255,0.10); border-color: rgba(0,122,255,0.35); }
 .light-mode .prod-input              { color: #000; background: rgba(0,0,0,0.04); }
 .light-mode .prod-td-nome            { color: #000; }
 .light-mode .prod-sep-nome           { color: #000; }
@@ -889,4 +893,3 @@
   padding: 10px 12px;
   border-radius: 11px;
 }
-
