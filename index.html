@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>StockFlow Pro v9.7.6</title>
+    <title>StockFlow Pro v9.7.5</title>
     <meta name="theme-color" content="#000000">
 
     <link rel="icon" href="icone.png" type="image/png">
@@ -34,7 +34,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="massa-extra.css">
     <link rel="stylesheet" href="apple-overrides.css">
-    <link rel="stylesheet" href="patch-v976.css">
 </head>
 <body>
 
@@ -230,7 +229,7 @@
 
     <!-- ===== CABEÇALHO ===== -->
     <div class="header-container">
-        <h1 id="titulo-principal">StockFlow Pro <span class="versao-badge">v9.7.6</span></h1>
+        <h1 id="titulo-principal">StockFlow Pro <span class="versao-badge" style="font-size:0.45em;font-weight:500;opacity:0.6;vertical-align:middle;letter-spacing:0.02em;">v9.7.5</span></h1>
         <!-- Ícone calendário: histórico por data -->
         <button id="btn-calendario" class="btn-calendario" title="Histórico por data" aria-label="Abrir calendário de histórico">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -245,12 +244,104 @@
 
     <!-- ===== MENU DE ABAS ===== -->
     <div class="nav-tabs">
-        <button class="nav-tab active" data-tab="estoque"><span class="tab-label">Estoque</span></button>
-        <button class="nav-tab" data-tab="compras"><span class="tab-label">Compras</span></button>
-        <button class="nav-tab" data-tab="adicionar"><span class="tab-label">Adicionar</span></button>
-        <button class="nav-tab" data-tab="listafacil"><span class="tab-label">Lista Fácil</span></button>
-        <button class="nav-tab" data-tab="massa"><span class="tab-label"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 22h20L12 2z"/><circle cx="12" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="8.5" cy="16" r="1" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor" stroke="none"/></svg> Massa</span></button>
-        <button class="nav-tab" data-tab="producao"><span class="tab-label">🍕 Produção</span></button>
+
+        <!-- ESTOQUE: prateleira com 3 planos — warehouse/shelf thin-line -->
+        <button class="nav-tab active" data-tab="estoque">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <!-- caixa com topo e base -->
+                <rect x="3" y="7" width="18" height="13" rx="1.5"/>
+                <!-- divisória interna / prateleira -->
+                <line x1="3" y1="13" x2="21" y2="13"/>
+                <!-- puxador superior esquerdo -->
+                <line x1="8" y1="4" x2="8" y2="7"/>
+                <!-- puxador superior direito -->
+                <line x1="16" y1="4" x2="16" y2="7"/>
+                <!-- itens na prateleira superior: 2 barras -->
+                <line x1="7" y1="10.5" x2="11" y2="10.5"/>
+                <line x1="13" y1="10.5" x2="17" y2="10.5"/>
+                <!-- itens na prateleira inferior: 1 barra mais longa -->
+                <line x1="7" y1="16.5" x2="17" y2="16.5"/>
+            </svg>
+            <span class="tab-label">Estoque</span>
+        </button>
+
+        <!-- COMPRAS: sacola de compras thin-line -->
+        <button class="nav-tab" data-tab="compras">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <!-- corpo da sacola -->
+                <path d="M4 7h16l-1.5 11a1.5 1.5 0 01-1.5 1.35H7a1.5 1.5 0 01-1.5-1.35L4 7z"/>
+                <!-- alça esquerda -->
+                <path d="M9 7V5a3 3 0 016 0v2"/>
+                <!-- detalhe: linha horizontal no meio da sacola -->
+                <line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            <span class="tab-label">Compras</span>
+        </button>
+
+        <!-- ADICIONAR: círculo com + fino, estilo thin-line -->
+        <button class="nav-tab" data-tab="adicionar">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9.5"/>
+                <line x1="12" y1="7.5" x2="12" y2="16.5"/>
+                <line x1="7.5" y1="12" x2="16.5" y2="12"/>
+            </svg>
+            <span class="tab-label">Adicionar</span>
+        </button>
+
+        <!-- LISTA FÁCIL: clipboard com linhas e check mark -->
+        <button class="nav-tab" data-tab="listafacil">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <!-- prancheta -->
+                <rect x="4" y="4" width="16" height="17" rx="1.5"/>
+                <!-- topo com clipe -->
+                <path d="M9 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/>
+                <!-- linha 1 com check -->
+                <polyline points="7.5,9.5 9,11 11,8.5"/>
+                <line x1="13" y1="9.5" x2="17.5" y2="9.5"/>
+                <!-- linha 2 com check -->
+                <polyline points="7.5,14 9,15.5 11,13"/>
+                <line x1="13" y1="14" x2="17.5" y2="14"/>
+                <!-- linha 3 sem check (pendente) -->
+                <line x1="7.5" y1="18.5" x2="17.5" y2="18.5"/>
+            </svg>
+            <span class="tab-label">Lista Fácil</span>
+        </button>
+
+        <!-- MASSA: fatia de pizza thin-line com toppings -->
+        <button class="nav-tab" data-tab="massa">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <!-- fatia triangular -->
+                <path d="M12 2 L3 21 L21 21 Z"/>
+                <!-- crosta na base com leve curva -->
+                <path d="M4.5 21 Q12 18.5 19.5 21"/>
+                <!-- topping 1 -->
+                <circle cx="9.5" cy="15" r="1.1"/>
+                <!-- topping 2 -->
+                <circle cx="14.5" cy="14" r="1.1"/>
+                <!-- topping 3 menor no topo -->
+                <circle cx="12" cy="10" r="0.8"/>
+            </svg>
+            <span class="tab-label">Massa</span>
+        </button>
+
+        <!-- PRODUÇÃO: engrenagem + gráfico de barras thin-line -->
+        <button class="nav-tab" data-tab="producao">
+            <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <!-- gráfico de barras (produção) -->
+                <line x1="3" y1="20" x2="21" y2="20"/>
+                <!-- barra 1 baixa -->
+                <rect x="4.5" y="15" width="3" height="5" rx="0.5"/>
+                <!-- barra 2 média -->
+                <rect x="10.5" y="11" width="3" height="9" rx="0.5"/>
+                <!-- barra 3 alta -->
+                <rect x="16.5" y="7" width="3" height="13" rx="0.5"/>
+                <!-- seta de tendência acima -->
+                <polyline points="5,13 11,9 17,5.5"/>
+                <polyline points="14.5,5 17,5.5 17,8"/>
+            </svg>
+            <span class="tab-label">Produção</span>
+        </button>
+
     </div>
 
     <!-- ===== SEÇÃO: ESTOQUE ===== -->
@@ -508,6 +599,7 @@
         <!-- Conteúdo gerado dinamicamente por producao.js -->
     </section>
 
+    <script type="module" src="store.js"></script>
     <script type="module" src="main.js"></script>
 </body>
 </html>
