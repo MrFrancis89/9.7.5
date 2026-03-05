@@ -447,3 +447,143 @@ body.theme-forest #btn-exportar {
    ════════════════════════════════════════════════════════════════════════════ */
 .tab-label { font-size: 10px; }
 .nav-tab   { font-size: 10px; }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PRE #21 — Nav Tabs: ícones SVG premium — otimização visual v9.7.6
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Estrutura vertical: ícone em cima, label embaixo */
+.nav-tab {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 4px 7px;
+  min-height: 56px;
+}
+
+/* Ícone SVG — tamanho e transição */
+.tab-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: block;
+  opacity: 0.55;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* Ativo e hover */
+.nav-tab.active .tab-icon    { opacity: 1; }
+.nav-tab:hover .tab-icon     { opacity: 0.85; }
+
+/* Label com kerning refinado */
+.tab-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Ativo: label fica branco e bold, ícone fica branco */
+.nav-tab.active .tab-label { font-weight: 700; }
+
+/* Micro-animação: ícone sobe levemente ao ativar */
+.nav-tab.active .tab-icon {
+  transform: translateY(-1px) scale(1.05);
+}
+
+/* Tab Adicionar: ícone em verde accent (destaque especial) */
+.nav-tab:not(.active)[data-tab="adicionar"] .tab-icon {
+  color: var(--accent-primary, #30D158);
+  opacity: 0.80;
+}
+.nav-tab:not(.active)[data-tab="adicionar"] .tab-label {
+  color: var(--accent-primary, #30D158);
+  opacity: 0.80;
+}
+
+/* Theme: Arctic / Light mode — ícone com cor de contraste */
+body.theme-arctic .nav-tab:not(.active) .tab-icon,
+body.light-mode   .nav-tab:not(.active) .tab-icon {
+  opacity: 0.45;
+}
+body.theme-arctic .nav-tab.active .tab-icon,
+body.light-mode   .nav-tab.active .tab-icon {
+  opacity: 1;
+}
+
+/* Hover state: sutíl background highlight */
+.nav-tab:not(.active):hover {
+  background: rgba(255,255,255,0.07);
+}
+body.theme-arctic .nav-tab:not(.active):hover,
+body.light-mode   .nav-tab:not(.active):hover {
+  background: rgba(0,0,0,0.06);
+}
+
+/* Press: escala */
+.nav-tab:active .tab-icon {
+  transform: scale(0.92);
+  transition-duration: 0.08s;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PRE #22 — Nav Tabs: thin-line icon style refinement v9.7.6
+   Calibrado para o estilo thin-outline da referência: traço 1.4px,
+   ícone 24×24, opacidade sutil nos inativos, transição suave.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.tab-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: block;
+  opacity: 0.52;
+  transition: opacity 0.20s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* Ativo: opacidade total + micro-spring */
+.nav-tab.active .tab-icon {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.06);
+}
+
+/* Hover: levemente mais visível */
+.nav-tab:hover:not(.active) .tab-icon {
+  opacity: 0.78;
+  transform: translateY(-0.5px);
+}
+
+/* Press: contrai */
+.nav-tab:active .tab-icon {
+  transform: scale(0.90) !important;
+  transition-duration: 0.07s;
+}
+
+/* Tabs inativos no tema claro precisam de ícone mais escuro */
+body.theme-arctic .tab-icon,
+body.light-mode   .tab-icon {
+  opacity: 0.40;
+}
+body.theme-arctic .nav-tab.active .tab-icon,
+body.light-mode   .nav-tab.active .tab-icon {
+  opacity: 1;
+}
+
+/* Label abaixo do ícone */
+.nav-tab {
+  gap: 3px;
+  padding: 9px 3px 7px;
+  min-height: 54px;
+}
+.tab-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0px;
+}
+.nav-tab.active .tab-label {
+  font-weight: 700;
+}
