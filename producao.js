@@ -1,8 +1,42 @@
-// producao.js — StockFlow Pro v9.7.4
+// producao.js — StockFlow Pro v9.7.6
 // ══════════════════════════════════════════════════════════════════
 // Aba "Produção Total" — planejamento diário de produção de massas.
 //
-// Responsabilidades:
+// BUGS CORRIGIDOS v9.7.6
+// ══════════════════════════════════════════════════════════════════
+// BUG #1 — _criarListaSeparacao: ml convertido para 'kg' em vez de 'l'
+//   PROBLEMA : unidade 'ml' com total ≥ 1000 exibia '1 kg' em vez de '1 l'.
+//              Usuário separava água errado.
+//   CORREÇÃO : Distingue g→kg e ml→l na formatação de exibição.
+//
+// BUG #2 — calcularMassaTotal: ignorava unidade dos ingredientes
+//   PROBLEMA : Ingrediente '0,5 kg de manteiga' somava 0,5 em vez de 500 g.
+//              Massa total completamente errada para ingredientes em kg/l.
+//   CORREÇÃO : normalizarParaGramas() converte kg→×1000 e l→×1000 antes de somar.
+//
+// BUG #3 — renderProducao: auto-cálculo nunca disparava em receitas novas
+//   PROBLEMA : .every(r => r.trigoKg > 0) — receitas sem trigoKg no schema
+//              retornam undefined > 0 = false. .every() exigia TODAS preenchidas,
+//              bastava uma nova para suprimir o auto-cálculo das demais.
+//   CORREÇÃO : Troca para .some(r => (r.trigoKg ?? 0) > 0).
+//
+// BUG #4 — massa-extra.css: classe CSS errada no override do light mode
+//   PROBLEMA : .light-mode .prod-config-nome não existe no DOM. A classe real
+//              é .prod-config-nome-badge. Badge invisível no tema Arctic/Light.
+//   CORREÇÃO : Seletor corrigido para .prod-config-nome-badge com cores de alto contraste.
+//
+// BUG #5 — _copiarListaSeparacao: '.prod-bolas-total' ausente com receita única
+//   PROBLEMA : A linha TOTAL (que tem .prod-bolas-total) só é criada quando há
+//              mais de 1 receita. Com receita única, querySelector retornava null
+//              e o header da cópia ficava sem a contagem de bolas.
+//   CORREÇÃO : Fallback para .prod-td-bolas quando .prod-bolas-total não existe.
+//
+// BUG #6 — consolidarInsumos: ingredientes em kg/l acumulados sem normalização
+//   PROBLEMA : "0,5 kg" e "300 g" do mesmo ingrediente em receitas diferentes
+//              somavam 300,5 em vez de 800 g.
+//   CORREÇÃO : Normaliza tudo para g/ml antes de acumular; unidade canônica
+//              preservada para exibição correta.
+// ══════════════════════════════════════════════════════════════════
 //   • Lê todas as receitas de 'massaMasterReceitas_v1'.
 //   • Por receita: recebe trigoKg + pesoBola → calcula massa total e bolas.
 //   • Consolida insumos de todas as receitas num único mapa somado.
@@ -48,20 +82,45 @@ function persistirCamposProducao(id, pesoBola, trigoKg) {
     }
 }
 
+// ── Normalização de unidades ──────────────────────────────────────
+/**
+ * Converte o valor de um ingrediente para gramas (ou ml, tratados como g).
+ * Necessário para calcular a massa total corretamente independente da unidade.
+ *   kg  → × 1000
+ *   l   → × 1000   (1 l ≈ 1000 g para fins de massa)
+ *   g / ml / outros → como está (g ou unidade discreta)
+ * @param {number} valor
+ * @param {string} unidade
+ * @returns {number}  valor normalizado em gramas
+ */
+function normalizarParaGramas(valor, unidade) {
+    // BUG FIX #2: calcularMassaTotal tratava todos os ingredientes como gramas,
+    // ignorando a unidade. Um ingrediente '0,5 kg' somava 0,5 em vez de 500,
+    // produzindo massa total totalmente errada para receitas com ingredientes em kg ou l.
+    switch ((unidade || '').toLowerCase()) {
+        case 'kg': return valor * 1000;
+        case 'l':  return valor * 1000;
+        default:   return valor;   // g, ml, uni, pct, colher, xícara, etc.
+    }
+}
+
 // ── Cálculo de Rendimento ─────────────────────────────────────────
 /**
  * Massa total produzida (em gramas) para uma receita com trigoKg kg de farinha.
- * Soma: trigo (g) + todos os ingredientes escalados (assume g ≈ ml).
+ * Soma: trigo (g) + todos os ingredientes normalizados e escalados por trigoKg.
  * @param {object} receita
  * @param {number} trigoKg
  * @returns {number}  massa total em gramas
  */
 function calcularMassaTotal(receita, trigoKg) {
     if (!trigoKg || trigoKg <= 0) return 0;
-    const somaIngredient = (receita.ingredientes || [])
-        .reduce((acc, ing) => acc + (parseFloat(ing.valor) || 0), 0);
-    // trigoKg*1000 = trigo em gramas + ingredientes escalados por trigoKg
-    return trigoKg * (1000 + somaIngredient);
+    const somaIngredientG = (receita.ingredientes || [])
+        .reduce((acc, ing) => {
+            // BUG FIX #2: normaliza para gramas antes de somar.
+            return acc + normalizarParaGramas(parseFloat(ing.valor) || 0, ing.unidade);
+        }, 0);
+    // trigoKg*1000 = trigo em gramas + todos os outros ingredientes em gramas
+    return trigoKg * (1000 + somaIngredientG);
 }
 
 // ── Contador de Bolas ─────────────────────────────────────────────
@@ -82,6 +141,12 @@ function calcularBolas(massaTotalG, pesoBola) {
  * Ingredientes com o mesmo nome (case-insensitive) são somados.
  * O trigo em si é adicionado como entrada "Trigo".
  *
+ * BUG FIX #6: ingredientes com unidade 'kg' ou 'l' são convertidos para
+ * 'g' / 'ml' antes de acumular, garantindo que "0,5 kg de manteiga" por
+ * receita e "300 g de manteiga" de outra receita sejam somados corretamente
+ * (300 + 500 = 800 g) em vez de (300 g + 0,5 → valor incoerente).
+ * A conversão inversa (g → kg) acontece na exibição quando total >= 1000.
+ *
  * @param {Array<{receita, trigoKg}>} configs
  * @returns {Map<string, {nome, total, unidade}>}
  *   chave = nome.toLowerCase().trim()
@@ -89,19 +154,35 @@ function calcularBolas(massaTotalG, pesoBola) {
 function consolidarInsumos(configs) {
     const mapa = new Map();
 
-    const somar = (nome, valor, unidade) => {
-        const chave = nome.toLowerCase().trim();
+    /** Normaliza unidade para a forma canônica de exibição (g ou ml) */
+    function unidadeCanonica(unidade) {
+        const u = (unidade || '').toLowerCase();
+        if (u === 'kg') return 'g';
+        if (u === 'l')  return 'ml';
+        return unidade;
+    }
+
+    const somar = (nome, valorBruto, unidade) => {
+        // BUG FIX #6: converte kg→g e l→ml para que a acumulação seja sempre
+        // na mesma escala. A exibição depois converte g≥1000 → kg, ml≥1000 → l.
+        const valor   = normalizarParaGramas(valorBruto, unidade);
+        const unidCan = unidadeCanonica(unidade);
+        const chave   = nome.toLowerCase().trim();
         if (!mapa.has(chave)) {
-            mapa.set(chave, { nome, total: 0, unidade });
+            mapa.set(chave, { nome, total: 0, unidade: unidCan });
         }
         mapa.get(chave).total += valor;
     };
 
     for (const { receita, trigoKg } of configs) {
         if (!trigoKg || trigoKg <= 0) continue;
-        // Trigo em si
-        somar('Trigo', trigoKg, 'kg');
-        // Demais ingredientes
+        // Trigo em si (já em kg, exibe diretamente como kg)
+        const chaveTrg = 'trigo';
+        if (!mapa.has(chaveTrg)) {
+            mapa.set(chaveTrg, { nome: 'Trigo', total: 0, unidade: 'kg' });
+        }
+        mapa.get(chaveTrg).total += trigoKg;
+        // Demais ingredientes — normaliza antes de acumular
         for (const ing of (receita.ingredientes || [])) {
             somar(ing.nome, trigoKg * (parseFloat(ing.valor) || 0), ing.unidade);
         }
@@ -202,9 +283,14 @@ export function renderProducao() {
         _copiarListaSeparacao();
     });
 
-    // Auto-calcular se todas as receitas já tiverem trigoKg preenchido
-    const todasPreenchidas = receitas.every(r => r.trigoKg > 0);
-    if (todasPreenchidas) _calcularEExibir(receitas);
+    // Auto-calcular se ao menos uma receita já tiver trigoKg preenchido.
+    // BUG FIX #3: usava .every(r => r.trigoKg > 0). Receitas recém-criadas na aba
+    // Massa não têm o campo trigoKg no schema — undefined > 0 = false sempre.
+    // Com .every(), basta UMA receita nova para suprimir o auto-cálculo para
+    // todas as outras já configuradas. Troca para .some() com ?? 0 garante que o
+    // cálculo dispara quando qualquer receita tiver trigoKg salvo de sessão anterior.
+    const algumPreenchido = receitas.some(r => (r.trigoKg ?? 0) > 0);
+    if (algumPreenchido) _calcularEExibir(receitas);
 }
 
 // ── Linha de configuração por receita ─────────────────────────────
@@ -496,11 +582,18 @@ function _criarListaSeparacao(mapa) {
 
         const spanVal = document.createElement('span');
         spanVal.className   = 'prod-sep-val';
-        // Converte g → kg quando >= 1000g e unidade é g/ml
-        const ehPeso = unidade === 'g' || unidade === 'ml';
-        spanVal.textContent = (ehPeso && total >= 1000)
-            ? fmtNum(total / 1000, 3) + ' kg'
-            : fmtNum(total, total < 1 ? 3 : 2) + ' ' + unidade;
+        // BUG FIX #1: o código anterior convertia TANTO g quanto ml para 'kg'
+        // quando total >= 1000. Isso fazia "1000 ml de água" exibir "1 kg" em
+        // vez de "1 l". Trigo já vem em 'kg' e é tratado separadamente.
+        let textoVal;
+        if (unidade === 'g' && total >= 1000) {
+            textoVal = fmtNum(total / 1000, 3) + ' kg';
+        } else if (unidade === 'ml' && total >= 1000) {
+            textoVal = fmtNum(total / 1000, 3) + ' l';
+        } else {
+            textoVal = fmtNum(total, total < 1 ? 3 : 2) + ' ' + unidade;
+        }
+        spanVal.textContent = textoVal;
 
         li.appendChild(spanNome);
         li.appendChild(spanVal);
@@ -522,7 +615,13 @@ function _copiarListaSeparacao() {
         return `${nome.padEnd(18)}: ${val}`;
     });
 
-    const totBolas = document.querySelector('.prod-bolas-total')?.textContent || '';
+    // BUG FIX #5: .prod-bolas-total só existe na linha TOTAL (configs.length > 1).
+    // Com receita única não há linha de totais — busca o único .prod-td-bolas como fallback.
+    const totBolas = (
+        document.querySelector('.prod-bolas-total')?.textContent ||
+        document.querySelector('.prod-td-bolas')?.textContent    ||
+        ''
+    ).trim();
     const cabecalho = `🍕 SEPARAÇÃO — ${hoje}` + (totBolas ? ` — ${totBolas} bolas` : '');
 
     copiarParaClipboard([cabecalho, '', ...linhas].join('\n'));
